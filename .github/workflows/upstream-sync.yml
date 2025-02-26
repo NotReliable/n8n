@@ -1,0 +1,35 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # Runs every hour (adjust as needed)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Fork
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Configure Git
+        run: |
+          git config user.name "NotReliable"
+          git config user.email "jacksiow0417@gmail.com"
+
+      - name: Add Upstream Remote
+        run: |
+          git remote add upstream https://github.com/n8n-io/n8n.git || true
+          git fetch upstream
+
+      - name: Merge Upstream Changes
+        run: |
+          git merge upstream/master --allow-unrelated-histories || true
+
+      - name: Push Changes
+        run: |
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
