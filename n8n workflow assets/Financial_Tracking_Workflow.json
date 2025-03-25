@@ -1,0 +1,231 @@
+{
+  "name": "Financial Tracking Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -520,
+        -160
+      ],
+      "id": "3ff6fc01-4556-49b2-ac9f-50591bcdec40",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        140
+      ],
+      "id": "1eaa7467-561f-4584-a362-835043438f50",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "13d808f2-84dc-811b-a0ae-cdb5a9ac85eb",
+          "mode": "list",
+          "cachedResultName": "支出",
+          "cachedResultUrl": "https://www.notion.so/13d808f284dc811ba0aecdb5a9ac85eb"
+        },
+        "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "支出|title",
+              "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}"
+            },
+            {
+              "key": "支出金额|number",
+              "numberValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Number', ``, 'number') }}"
+            },
+            {
+              "key": "记录日期|date",
+              "includeTime": false,
+              "date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Date', ``, 'string') }}",
+              "timezone": "Asia/Singapore"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        140
+      ],
+      "id": "9b85ec6b-3bb4-4a21-a887-82d55e30ac5e",
+      "name": "create_financial_record",
+      "credentials": {
+        "notionApi": {
+          "id": "SpycmLTyq3UWgNYR",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -820,
+        140
+      ],
+      "id": "542f91e4-61bc-4b28-b74c-809a71151649",
+      "name": "Deepseek r1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dC241nGdLJWWxrxn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive input as below :\n{{ $json.toJsonString() }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are the Financial Tracking AI Agent. Your role is to process finance record creation requests by receiving delegation commands from the Manager AI Agent and then executing the corresponding tool to create a finance record.\n\n# Tools & Integration\n## Notion API Tool\n- **Identifier** : \"create_financial_record\" \n- **Purpose:** Create and store finance records in Notion.\n\n## Important Note\nToday Date is {{ $now.format('yyyy-MM-dd') }}\nAsk for clear verification if the information is uncleared about the task given.\nProceed with standard protocol if the task is not able to delegate to any subagents or tools.\nIf any parameter is missing or invalid, ask for clarification instead of proceeding.\nEnsure that each parameter is correctly extracted and formatted.\n\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -280,
+        -160
+      ],
+      "id": "22bfaf7a-315d-4ea3-851f-8dcc501778f9",
+      "name": "Financial Tracking Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -440,
+        160
+      ],
+      "id": "85b06e8a-c04b-4a4a-98f8-dd89dad3f779",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "z114ZqIH3JcoUWXV",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "date": "2025-03-05",
+          "time": "12:20",
+          "event": "lunch"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Financial Tracking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "create_financial_record": {
+      "ai_tool": [
+        [
+          {
+            "node": "Financial Tracking Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deepseek r1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Financial Tracking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "661aac3e-fbdf-4aba-b6b6-46f8fe35bb8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6a23a1377e872f6f201a296e14c75691e100934cfebe9566c37e5753607d423"
+  },
+  "id": "MUD1lr5icZmGDoF5",
+  "tags": [
+    {
+      "createdAt": "2025-03-09T01:40:59.110Z",
+      "updatedAt": "2025-03-09T01:40:59.110Z",
+      "id": "1VkoD54MeIZgRoTx",
+      "name": "Nova"
+    },
+    {
+      "createdAt": "2025-03-05T13:51:44.265Z",
+      "updatedAt": "2025-03-05T13:51:44.265Z",
+      "id": "4qWjcBNJlDznX5UE",
+      "name": "Automation"
+    },
+    {
+      "createdAt": "2025-03-05T13:51:35.866Z",
+      "updatedAt": "2025-03-05T13:51:35.866Z",
+      "id": "b9t51zEUG59xKRay",
+      "name": "Personal"
+    }
+  ]
+}

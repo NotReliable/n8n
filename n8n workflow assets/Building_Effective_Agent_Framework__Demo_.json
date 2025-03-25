@@ -1,0 +1,1751 @@
+{
+  "name": "Building Effective Agent Framework (Demo)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# PROMPT-CHAINING\nPrompt chaining decomposes a task into a sequence of steps, where each LLM call processes the output of the previous one.\n\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F7418719e3dab222dccb379b8879e1dc08ad34c78-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nThis workflow is ideal for situations where the task can be easily and cleanly decomposed into fixed subtasks. The main goal is to trade off latency for higher accuracy, by making each LLM call an easier task.\n\nBenefits\n- Breaking down the work into simpler chunks, making it easier for each of the LLM to work on.\n- Allows for more flexibility, being able to use different model in each stage of a task.\n- Easier to debug, as the process is divided into simpler parts.",
+        "height": 660,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        -200
+      ],
+      "id": "ea71568a-1242-4771-80d1-56b6a197726c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# ROUTING\nRouting classifies an input and directs it to a specialized followup task. This workflow allows for separation of concerns, and building more specialized prompts. Without this workflow, optimizing for one kind of input can hurt performance on other inputs.\n\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F5c0c0e9fe4def0b584c04d37849941da55e5e71c-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nRouting works well for complex tasks where there are distinct categories that are better handled separately, and where classification can be handled accurately, either by an LLM or a more traditional classification model/algorithm.",
+        "height": 580,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        520
+      ],
+      "id": "6abf9477-6442-4502-bd8b-fcf0b2240896",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Parallelization\nLLMs can sometimes work simultaneously on a task and have their outputs aggregated programmatically. This workflow, parallelization, manifests in two key variations:\n## Sectioning: \nBreaking a task into independent subtasks that run in parallel.\n## Voting: \nRunning the same task multiple times to get diverse outputs.\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F406bb032ca007fd1624f261af717d70e6ca86286-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nParallelization is effective when the divided subtasks can be parallelized for speed, or when multiple perspectives or attempts are needed for higher confidence results. For complex tasks with multiple considerations, LLMs generally perform better when each consideration is handled by a separate LLM call, allowing focused attention on each specific aspect.",
+        "height": 700,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        1180
+      ],
+      "id": "5b36bf56-9630-414a-a52d-1af55431d726",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Orchestrator-workers\nIn the orchestrator-workers workflow, a central LLM dynamically breaks down tasks, delegates them to worker LLMs, and synthesizes their results.\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F8985fc683fae4780fb34eab1365ab78c7e51bc8e-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nThis workflow is well-suited for complex tasks where you can’t predict the subtasks needed (in coding, for example, the number of files that need to be changed and the nature of the change in each file likely depend on the task). Whereas it’s topographically similar, the key difference from parallelization is its flexibility—subtasks aren't pre-defined, but determined by the orchestrator based on the specific input.",
+        "height": 560,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        1940
+      ],
+      "id": "bf47eaa7-9ee9-483c-a58c-05c6e314060c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Evaluator-optimizer\nIn the evaluator-optimizer workflow, one LLM call generates a response while another provides evaluation and feedback in a loop.\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F14f51e6406ccb29e695da48b17017e899a6119c7-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nThis workflow is particularly effective when we have clear evaluation criteria, and when iterative refinement provides measurable value. The two signs of good fit are, first, that LLM responses can be demonstrably improved when a human articulates their feedback; and second, that the LLM can provide such feedback. This is analogous to the iterative writing process a human writer might go through when producing a polished document.\n\n",
+        "height": 600,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        2560
+      ],
+      "id": "7b96d079-d8ee-42b6-be1e-9f38f988afff",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# Agents\nAgents rely on LLMs’ abilities to understand complex inputs, reason and plan, use tools reliably, and recover from errors. They typically start with either a direct command or an interactive conversation with the user. Once the task is clear, agents plan and operate on their own, but can return to the user for additional information or judgment. During execution, it’s important for them to gather real-time feedback (such as tool results or code execution outputs) to monitor progress. They may pause for human input at checkpoints or when facing obstacles. Tasks usually end upon completion, though stopping conditions (like a maximum number of iterations) are often set for control.\n\nEven though agents can manage complex tasks, their implementation is generally straightforward. They are essentially LLMs that loop through tool usage based on feedback from the environment. As a result, it’s crucial to design both the tools and their documentation with care.\n![Image Description](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F58d9f10c985c4eb5d53798dea315f7bb5ab6249e-2401x1000.png&w=3840&q=75)\n## When to use this workflow: \nAgents can be used for open-ended problems where it’s difficult or impossible to predict the required number of steps, and where you can’t hardcode a fixed path. The LLM will potentially operate for many turns, and you must have some level of trust in its decision-making. Agents' autonomy makes them ideal for scaling tasks in trusted environments.\n\nThe autonomous nature of agents means higher costs, and the potential for compounding errors. We recommend extensive testing in sandboxed environments, along with the appropriate guardrails.\n\n",
+        "height": 820,
+        "width": 740,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        120,
+        3220
+      ],
+      "id": "de34a21d-c2ef-4c87-a048-ef7545cce3ac",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        200
+      ],
+      "id": "dc67e513-8666-4c93-a185-d8eda7606d3a",
+      "name": "2.0 Flash Thinking"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a detailed report in html for the following topic: \"{{ $('Prompt Chaining').item.json.topic }}}\"\n\nfollowing this outline:\n{{ $json.output }}\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1800,
+        20
+      ],
+      "id": "16ae97aa-25ba-45e1-a70b-50cfd235570c",
+      "name": "Report Generator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        220
+      ],
+      "id": "344a9ea2-4c06-4a60-a2da-ce02d797bb70",
+      "name": "O3-MINI"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        1800,
+        220
+      ],
+      "id": "8ad17da0-4c38-40d9-8cb5-1aee567c21c4",
+      "name": "Claude 3.5 Sonnet"
+    },
+    {
+      "parameters": {
+        "inputText": "=Your objective is to clearly understand what kind of content the user expects based on their request: {{ $json.chatInput }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Poem",
+              "description": "User is asking for a poem on a topic"
+            },
+            {
+              "category": "Joke",
+              "description": "User is asking for a joke on a topic"
+            },
+            {
+              "category": "Story",
+              "description": "User is asking for a story on a topic"
+            },
+            {
+              "category": "Not Clear",
+              "description": "If it is not clear what kind of content the user wants."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        720
+      ],
+      "id": "2920f840-b2c8-46c1-9039-25f26ad688c4",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1820,
+        560
+      ],
+      "id": "e7d4d855-21c1-4bc4-a8ad-1502b504c8b4",
+      "name": "Poem Generator"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1820,
+        700
+      ],
+      "id": "6f5ba5ef-e93c-4e26-ba85-c5375f65b6b1",
+      "name": "Joke Generator"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1820,
+        840
+      ],
+      "id": "db6a38a2-39f2-47ad-97e6-1d2e882bf5ea",
+      "name": "Story Generator"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"output\":  \"I'm not sure what type of content you're. Could you clarify if you'd like a **Poem**, a **Joke**, or a **Story**?\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1820,
+        980
+      ],
+      "id": "63c7c348-28b8-40c4-af4a-b0c26421f958",
+      "name": "Error Message"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1480,
+        980
+      ],
+      "id": "1f014cad-f6ef-431a-8c0a-6bfffc8e836a",
+      "name": "O3-mini-Routing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search for top-rated hotels based on \"{{ $json.chatInput }}\".  \nProvide a concise list including hotel names, price ranges, star ratings, and brief highlights.\n\nInstruction: Always use the SERP API tool.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1440,
+        1460
+      ],
+      "id": "0209cf87-22cb-4cc6-93fd-1496b135d310",
+      "name": "Hotel Finder"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search for top-rated restaurants based on \"{{ $json.chatInput }}\".  \nList 5 recommended restaurants, each with a short description highlighting cuisine type, rating, and popular dishes.\n\nInstruction: Always use the SERP API tool.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1440,
+        1260
+      ],
+      "id": "f39dc1b5-16b6-4c22-aaa7-c23257105d1b",
+      "name": "Restaurant Finder"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        1660
+      ],
+      "id": "1ab8e0e5-9da7-42f8-a121-0fdf1229a10d",
+      "name": "SerpAPI"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search for popular tourist attractions and activities based on \"{{ $json.chatInput }}\".  \nGenerate a short list including activity names, types (cultural, outdoor, etc.), and brief descriptions.\n\nInstruction: Always use the SERP API tool.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1440,
+        1660
+      ],
+      "id": "160f7ae0-bd12-4458-a863-196d2fc46b6a",
+      "name": "Activity Finder"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"output\": {{ JSON.stringify(`\n🏨 Hotels Recommendations:\n${$('Merge').all()[0].json.output}\n\n👨‍🍳 Restaurant Recommendations:\n${$('Merge').all()[1].json.output}\n\n\n🎯 Activity Recommendations:\n${$('Merge').all()[2].json.output}\n`) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2140,
+        1460
+      ],
+      "id": "293f3e97-d7ba-4755-a498-45fdd64504ff",
+      "name": "Aggregator",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1980,
+        1460
+      ],
+      "id": "cc2bc556-ebd2-4510-a5ea-9eeedb89ac37",
+      "name": "Merge",
+      "executeOnce": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        940,
+        20
+      ],
+      "id": "6ceaf5bd-6bfd-483d-b1df-a8211e3a3154",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a creative copywriter.\nThe user wants 3 short, catchy slogans for their brand or product: \"{{ $json.chatInput }}\".\nEmphasize originality, memorability, and brand appeal in each slogan.\nDo not include any extraneous details or explanations.\n\nFormat your response as follows:\n1. ...\n2. ...\n3. ...",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3180,
+        1220
+      ],
+      "id": "beecc6ee-8f0e-453b-bc1b-5511c48bef47",
+      "name": "OpenAI CopyWriter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a creative copywriter.\nThe user wants 3 short, catchy slogans for their brand or product: \"{{ $json.chatInput }}\".\nEmphasize originality, memorability, and brand appeal in each slogan.\nDo not include any extraneous details or explanations.\n\nFormat your response as follows:\n1. ...\n2. ...\n3. ...",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3180,
+        1460
+      ],
+      "id": "fd7522b0-0c51-4c7c-8473-28d85cfa79ba",
+      "name": "Anthropic CopyWriter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a creative copywriter.\nThe user wants 3 short, catchy slogans for their brand or product: \"{{ $json.chatInput }}\".\nEmphasize originality, memorability, and brand appeal in each slogan.\nDo not include any extraneous details or explanations.\n\nFormat your response as follows:\n1. ...\n2. ...\n3. ...",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3180,
+        1700
+      ],
+      "id": "5063d9e8-e00d-4a60-a132-d660586ac2d7",
+      "name": "Gemini CopyWriter"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3180,
+        1340
+      ],
+      "id": "3c9cb724-e125-4b01-8216-2fa5e05c01d7",
+      "name": "2.0 Flash CW"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        3180,
+        1580
+      ],
+      "id": "f3164066-f2b7-4835-817b-0cd77226edf0",
+      "name": "Claude 3.5 CW"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3180,
+        1820
+      ],
+      "id": "7a134f57-7c9b-41b2-9d35-b9b953280c5b",
+      "name": "O3-MINI CW"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3720,
+        1500
+      ],
+      "id": "1e97d6d8-7275-401b-a74b-344841732565",
+      "name": "Voting Merge"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"output\": {{ JSON.stringify(`\n2.0 Flash:\n${$('Voting Merge').all()[0].json.output}\n\nClaude 3.5:\n${$('Voting Merge').all()[1].json.output}\n\nO3-MINI:\n${$('Voting Merge').all()[2].json.output}\n`) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3920,
+        1500
+      ],
+      "id": "bfdd6f17-8cc5-4f9e-90f4-56c99a3cca30",
+      "name": "CW Aggregator",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "sendTo": "mahmutktech98@gmail.com",
+        "subject": "Copy Writer Demo",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2340,
+        1460
+      ],
+      "id": "3222b984-ed8b-43ab-8ef6-ab149bf40bea",
+      "name": "Sectioning Demo",
+      "webhookId": "080228b9-3925-4009-8241-9b3854616590"
+    },
+    {
+      "parameters": {
+        "sendTo": "mahmutktech98@gmail.com",
+        "subject": "Copy Writer Demo",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4120,
+        1500
+      ],
+      "id": "66767812-baf1-44fc-a2f5-d4404a74a3b1",
+      "name": "CW Demo",
+      "webhookId": "080228b9-3925-4009-8241-9b3854616590"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email Content: {{$json.output}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are the Email Evaluator for TechSpark\n\nYou will receive an email content\n\nEvaluate the email based on:\n- Clarity and completeness.\n- Tone (professional, friendly, etc.).\n- Proper sign-off as \"John Doe\".\n- Text should not include the \"Subject\"\n\nReturn your evaluation as valid JSON with one of the following formats:\n\n1. If the email passes all criteria:\n{\n  \"pass\": true\n}\n\n2. If the email does not meet all criteria:\n{\n  \"pass\": false,\n  \"feedback\": \"Provide concise, actionable suggestions here.\"\n}\n\nNo extra keys or text outside the JSON structure."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2060,
+        2700
+      ],
+      "id": "330d8c40-0654-4666-bd74-b33620202659",
+      "name": "Evaluator"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c7cd25e9-31ab-4c2a-8880-0148aea726c2",
+              "leftValue": "={{ $json.output.pass }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2380,
+        2700
+      ],
+      "id": "0572c061-e40c-4e83-9d09-4caf9821999c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"pass\": true,\n\t\"feedback\": \"this is empty when pass is true\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        2920
+      ],
+      "id": "5f10e5a4-2fcc-4536-932d-8495912c4dfa",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1720,
+        2960
+      ],
+      "id": "cc870f9f-d15f-46c1-8da1-0917ababadaa",
+      "name": "EO - o3 mini"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2720
+      ],
+      "id": "05f08032-45fd-43a4-b6e8-bbefcc3f257a",
+      "name": "Gmail Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=You are a Customer Support Specialist at TechSpark Solutions.\n\nYou will be provided with a customer inquiry\n\nPrepare a concise, polite, and helpful email response addressing the customer’s question or concern.  \n\nOutput only the final email text—no extra commentary or formatting.\n\n\n\n<feedback> (if any)\n{{ $json.feedback }}\n\n\n<preparedEmail> (if an email is already prepared, this is what the feedback is on)\n{{ $json.currentEmail }}\n</preparedEmail>\n</feedback>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1680,
+        2700
+      ],
+      "id": "ea7986a7-9ea1-4b58-9b04-9e54b5a133a9",
+      "name": "Customer Support"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $('Gmail Trigger').first().json.threadId }}",
+        "messageId": "={{ $('Gmail Trigger').first().json.id }}",
+        "message": "={{ $('Customer Support').last().json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2680,
+        2680
+      ],
+      "id": "5f24df94-c654-4d05-80a9-d2bede29fb6f",
+      "name": "Gmail",
+      "webhookId": "58be091c-293b-4fcc-8c56-56da568e0637"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"currentEmail\": {{ JSON.stringify($('Customer Support').last().json.output) }},\n  \"feedback\": {{  JSON.stringify($json.output.feedback) }},\n  \"text\": {{  JSON.stringify($('Gmail Trigger').first().json.text) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1960,
+        2940
+      ],
+      "id": "a62794d0-4a2d-46b8-a5f2-5bfeb9f3f81e",
+      "name": "feedback"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Customer Inquiry",
+              "description": "Text where the user requests assistance, more information, or expresses a concern about a product or service."
+            },
+            {
+              "category": "No Action Required",
+              "description": "Text that does not ask a question, seek information, or require a direct response."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are a text classifier at TechSpark Solutions.\nPlease classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        2720
+      ],
+      "id": "e2dd5369-87b3-4c70-ac88-eb5d6f2e9640",
+      "name": "Classify Email"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"chatInput\": \"Taksim, Istanbul\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        1480
+      ],
+      "id": "a54b752a-7a26-4225-b60d-7aa04d1b9749",
+      "name": "Sectioning"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"chatInput\": \"Aithletic an AI Driven Fitness App, that will personalized exercises based on user profile\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2820,
+        1460
+      ],
+      "id": "597cd3c0-43d7-4ac5-a69d-b9a3c8264e60",
+      "name": "Voting"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"chatInput\": \"tell me a joke about a cat\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        720
+      ],
+      "id": "61c53bdf-814c-4584-b760-9315ca6c7235",
+      "name": "Routing"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"topic\": \"obesity\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1080,
+        20
+      ],
+      "id": "96fa226d-9443-4483-aa17-620c7694a77f",
+      "name": "Prompt Chaining"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        3460
+      ],
+      "id": "0bb4a23e-5dbb-468d-83a7-8ef552467e48",
+      "name": "When chat message received",
+      "webhookId": "03da4a05-c510-4577-b723-d695740de587"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        3700
+      ],
+      "id": "51f7c3eb-2306-49ff-8ce3-5aae83056611",
+      "name": "Agents - O3-MINI"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "mahmutktech98@gmail.com",
+          "mode": "list",
+          "cachedResultName": "mahmutktech98@gmail.com"
+        },
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1680,
+        3680
+      ],
+      "id": "9360b579-0f67-4dc2-a343-0b20c8f5c309",
+      "name": "Get Events"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "mahmutktech98@gmail.com",
+          "mode": "list",
+          "cachedResultName": "mahmutktech98@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Attendees', `Event Attendees`, 'string') }}"
+          ],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', `Event Title`, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1560,
+        3680
+      ],
+      "id": "cd0d9495-cc37-49ed-bff1-9b67eb656619",
+      "name": "Create Calendar Event"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a helpful calendar assistant.\n\nContext:\nCurrent Date Time: {{ $now }}}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1220,
+        3460
+      ],
+      "id": "892b6cc4-5070-417b-b044-08917678ecd5",
+      "name": "Calendar Agent"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"input\": \"Please translate the following to Spanish, Turkish, and French -> Hello! I just arrived in Barcelona, and I’m already captivated by the city’s vibrant atmosphere. The weather is sunny and warm, perfect for exploring the narrow streets and sampling local tapas. Tomorrow, I plan to visit the famous Sagrada Família, and next week I’ll head to Madrid for a brief business meeting. Traveling always broadens my perspective, and I can’t wait to discover more of Spain’s rich culture and history.\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1160,
+        2100
+      ],
+      "id": "70a4bcb2-2600-44d3-bcde-376a7886c20b",
+      "name": "Orchestrator"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.input }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an Orchestrator. A user will provide a text and the language(s) they want to translate the text into.\n\nYour goal:\n1. Identify all languages the user wants to translate the text into.\n2. Identify the text\".\n3. Produce a valid JSON array where each element has:\n   {\n     \"Language\": \"<target language>\",\n     \"text\": \"<original text>\"\n   }\n\nConstraints:\n- Output only the JSON array, nothing else.\n- If multiple languages are listed, create one object per language.\n- If no languages are mentioned, output an empty array.\n\nExample Input:\n\"Please translate the following to Spanish, Turkish, and French -> Hello! I just arrived in Barcelona...\"\n\nExpected Output (valid JSON):\n[\n  {\n    \"Language\": \"Spanish\",\n    \"text\": \"Hello! I just arrived in Barcelona...\"\n  },\n  {\n    \"Language\": \"Turkish\",\n    \"text\": \"Hello! I just arrived in Barcelona...\"\n  },\n  {\n    \"Language\": \"French\",\n    \"text\": \"Hello! I just arrived in Barcelona...\"\n  }\n]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1340,
+        2100
+      ],
+      "id": "d159848a-a2be-4306-b799-c9a309205727",
+      "name": "Orchestrator Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1780,
+        2340
+      ],
+      "id": "ff99f62b-d05b-4e49-90ab-26157589b1df",
+      "name": "O3-mini-Routing2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1240,
+        1320
+      ],
+      "id": "ecf53e81-aba7-4899-874f-09ccd9043dc1",
+      "name": "O3-mini-P"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1240,
+        3740
+      ],
+      "id": "38f2aaa0-dc05-46bb-982d-a72179499b7a",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        2100
+      ],
+      "id": "3fd033a9-2256-4202-9ad8-d25903ffeab3",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"Language\": \"Spanish\",\n    \"text\": \"Sample text, Hi there, My name is John\"\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        2360
+      ],
+      "id": "77bd2351-d7bb-47c1-ba50-4c22d7262cda",
+      "name": "Translation Array"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2180,
+        2100
+      ],
+      "id": "2af99f2d-0318-4081-b9d1-cd23be245317",
+      "name": "Translated Text"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Translator Agent.\n\nPlease translate the text below into: {{ $json.Language }}\n\nText to translate:\n{{ $json.text }}\n\nOutput only the translated text With the translated language as the title, with no additional commentary.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1860,
+        2100
+      ],
+      "id": "104c4cb3-2bb7-4996-9a9b-e51786d49f24",
+      "name": "Translator Agent"
+    },
+    {
+      "parameters": {
+        "sendTo": "oncekod98@gmail.com",
+        "subject": "=Translated Text",
+        "emailType": "text",
+        "message": "={{ $json.output.join('\\n\\n') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2400,
+        2100
+      ],
+      "id": "be8317ff-486c-4827-aa30-3aba465e6549",
+      "name": "Gmail3",
+      "webhookId": "39a7f851-3576-477c-8ec6-792a05230062"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=List concise, structured key points and angles about the following topic: {{ $json.topic }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1220,
+        20
+      ],
+      "id": "b33cdcf7-4743-4c26-986b-3ecfec469bc4",
+      "name": "Key Points Generator",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "sendTo": "=mahmutktech98@gmail.com",
+        "subject": "Prompt Chaining Demo",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2100,
+        20
+      ],
+      "id": "f3a77bdf-7616-42b2-b6c6-a39da0bd74ba",
+      "name": "Gmail4",
+      "webhookId": "4e66298d-d364-4ea5-846c-7673a94a9839"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        3680
+      ],
+      "id": "5dda840c-85b4-42f8-af2d-f9974003acc6",
+      "name": "Send Email",
+      "webhookId": "71a39428-8b08-4105-88fb-5c7ca0e4fa16"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Using the following notes as a reference:\n{{$json.output}}\n\nCreate a report outline for \"{{$('Prompt Chaining').item.json.topic}}\".  \nInclude clearly named sections with brief descriptions, structured as follows:\n- Introduction\n- Main body sections\n- Conclusion",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1520,
+        20
+      ],
+      "id": "c77a1a79-9074-4bcc-b75a-356d3c90da1f",
+      "name": "Report Planner"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "2.0 Flash Thinking": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Key Points Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Generator": {
+      "main": [
+        [
+          {
+            "node": "Gmail4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O3-MINI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Report Planner",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude 3.5 Sonnet": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Report Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Poem Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Joke Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Story Generator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O3-mini-Routing": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Poem Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Joke Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Story Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "Restaurant Finder",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Hotel Finder",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Activity Finder",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restaurant Finder": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hotel Finder": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Activity Finder": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Prompt Chaining",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2.0 Flash CW": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "OpenAI CopyWriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude 3.5 CW": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Anthropic CopyWriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O3-MINI CW": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini CopyWriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI CopyWriter": {
+      "main": [
+        [
+          {
+            "node": "Voting Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic CopyWriter": {
+      "main": [
+        [
+          {
+            "node": "Voting Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Gemini CopyWriter": {
+      "main": [
+        [
+          {
+            "node": "Voting Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Voting Merge": {
+      "main": [
+        [
+          {
+            "node": "CW Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CW Aggregator": {
+      "main": [
+        [
+          {
+            "node": "CW Demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregator": {
+      "main": [
+        [
+          {
+            "node": "Sectioning Demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluator": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Evaluator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EO - o3 mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Support",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Classify Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support": {
+      "main": [
+        [
+          {
+            "node": "Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "feedback": {
+      "main": [
+        [
+          {
+            "node": "Customer Support",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Email": {
+      "main": [
+        [
+          {
+            "node": "Customer Support",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sectioning": {
+      "main": [
+        [
+          {
+            "node": "Restaurant Finder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hotel Finder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Activity Finder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voting": {
+      "main": [
+        [
+          {
+            "node": "OpenAI CopyWriter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Anthropic CopyWriter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gemini CopyWriter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Routing": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt Chaining": {
+      "main": [
+        [
+          {
+            "node": "Key Points Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agents - O3-MINI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendar Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O3-mini-P": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Restaurant Finder",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Hotel Finder",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Activity Finder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O3-mini-Routing2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Translator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator Agent": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Translator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translation Array": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translator Agent": {
+      "main": [
+        [
+          {
+            "node": "Translated Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translated Text": {
+      "main": [
+        [
+          {
+            "node": "Gmail3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Key Points Generator": {
+      "main": [
+        [
+          {
+            "node": "Report Planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Planner": {
+      "main": [
+        [
+          {
+            "node": "Report Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5d844f6c-dd12-469d-9753-e23e47ec711a",
+  "meta": {
+    "instanceId": "e6a23a1377e872f6f201a296e14c75691e100934cfebe9566c37e5753607d423"
+  },
+  "id": "x3jNcZcec3Z1rHzd",
+  "tags": [
+    {
+      "createdAt": "2025-03-09T01:42:02.516Z",
+      "updatedAt": "2025-03-09T01:42:02.516Z",
+      "id": "E36F4PcGtIUTuh4U",
+      "name": "Demo"
+    }
+  ]
+}

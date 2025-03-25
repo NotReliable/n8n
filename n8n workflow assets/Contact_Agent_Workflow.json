@@ -1,0 +1,420 @@
+{
+  "name": "Contact Agent Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are a contact management assistant. Your responsibilities include looking up contacts, adding new contacts, updating a contact's information , or delete a contacts.\n\n## Tools\n### Get Contact\n- **Identifier:** `get_contact`\n- **Purpose:** Use this tool to get contact details of a specific contact. You must use the `get_all_contact` tool first to get all the contact details and filter out the specific contact that needed using the contact name given to you so that the contact ID is obtained to retrieve specific contact details.\n### Delete Contact\n- **Identifier:** `delete_contact`\n- **Purpose:** Use this tool to delete a contact information based on a given name or phone number. You must use the `get_contact` tool first to get the contact ID of the contact to delete.\n### Get All Contact\n- **Identifier:** `get_all_contact`\n- **Purpose:** Use this tool to get all contact informations.\n### Update Contact\n- **Identifier:** `update_contact`\n- **Purpose:** Use this tool to update contact informations based on a given name or phone number. You must use the `get_contact` tool first to get the contact ID of the contact to update.\n### Create contact\n- **Identifier:** `create_contact`\n- **Purpose:** Use this tool to create a contact informations."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -520,
+        80
+      ],
+      "id": "1f21b957-39d4-4fbd-86d7-6901085c32d0",
+      "name": "Contact Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4f360190-a717-4a93-8336-d03ea65975d5",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ac6c43e7-cc5c-4a93-afd3-6b74d34900ee",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4f360190-a717-4a93-8336-d03ea65975d5",
+              "name": "response",
+              "value": "An error occurred. Please try again.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        180
+      ],
+      "id": "f9ef48ed-40ed-45be-9582-d4c1b9fda589",
+      "name": "Try Again"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -740,
+        80
+      ],
+      "id": "afa4aa48-5688-42fb-b905-9a6fd56d373b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        300
+      ],
+      "id": "83ff349d-8fcd-4559-86bf-d1625142b32c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "fields": [
+          "birthdays",
+          "names",
+          "phoneNumbers",
+          "emailAddresses",
+          "genders"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleContacts",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        380
+      ],
+      "id": "bbf6e002-aa74-4988-b45a-680ab35033e3",
+      "name": "Google Contacts",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "familyName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Family_Name', ``, 'string') }}",
+        "givenName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Given_Name', ``, 'string') }}",
+        "additionalFields": {
+          "birthday": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Birthday', ``, 'string') }}",
+          "emailsUi": {
+            "emailsValues": [
+              {
+                "type": "home",
+                "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+              }
+            ]
+          },
+          "phoneUi": {
+            "phoneValues": [
+              {
+                "type": "mobile",
+                "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleContactsTool",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        440
+      ],
+      "id": "5db36f54-4bc6-4814-90f1-94c50524176a",
+      "name": "create_contact",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "contactId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.googleContactsTool",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        460
+      ],
+      "id": "f5fd0f8a-82d2-432d-8a78-c6b31c0f3dff",
+      "name": "delete_contact",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_ID', ``, 'string') }}",
+        "fields": [
+          "birthdays",
+          "names",
+          "phoneNumbers",
+          "emailAddresses"
+        ],
+        "updateFields": {
+          "givenName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Given_Name', ``, 'string') }}",
+          "birthday": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Birthday', ``, 'string') }}",
+          "emailsUi": {
+            "emailsValues": [
+              {
+                "type": "home",
+                "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+              }
+            ]
+          },
+          "phoneUi": {
+            "phoneValues": [
+              {
+                "type": "mobile",
+                "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleContactsTool",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        460
+      ],
+      "id": "263ea36e-77df-475c-9b6e-8710ed253127",
+      "name": "update_contact",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "fields": [
+          "birthdays",
+          "emailAddresses",
+          "genders",
+          "names",
+          "phoneNumbers"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleContactsTool",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        440
+      ],
+      "id": "1e7e3cab-d3bc-4140-877a-e0a2f1980744",
+      "name": "get_all_contact",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "contactId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_ID', ``, 'string') }}",
+        "fields": [
+          "birthdays",
+          "emailAddresses",
+          "genders",
+          "names",
+          "phoneNumbers",
+          "sipAddresses"
+        ]
+      },
+      "type": "n8n-nodes-base.googleContactsTool",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        360
+      ],
+      "id": "cba44723-710e-48fe-8b8c-1e5fe738e5f4",
+      "name": "get_contact",
+      "credentials": {
+        "googleContactsOAuth2Api": {
+          "id": "uqpZ3luwLoHWNBf1",
+          "name": "Google Contacts account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Contact Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_contact": {
+      "ai_tool": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete_contact": {
+      "ai_tool": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_contact": {
+      "ai_tool": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_all_contact": {
+      "ai_tool": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_contact": {
+      "ai_tool": [
+        [
+          {
+            "node": "Contact Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "211d3deb-5424-46de-b5f5-af2a841743c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6a23a1377e872f6f201a296e14c75691e100934cfebe9566c37e5753607d423"
+  },
+  "id": "tFBIOoctFvjwiDBI",
+  "tags": [
+    {
+      "createdAt": "2025-03-09T01:40:59.110Z",
+      "updatedAt": "2025-03-09T01:40:59.110Z",
+      "id": "1VkoD54MeIZgRoTx",
+      "name": "Nova"
+    },
+    {
+      "createdAt": "2025-03-05T13:51:44.265Z",
+      "updatedAt": "2025-03-05T13:51:44.265Z",
+      "id": "4qWjcBNJlDznX5UE",
+      "name": "Automation"
+    },
+    {
+      "createdAt": "2025-03-05T13:51:35.866Z",
+      "updatedAt": "2025-03-05T13:51:35.866Z",
+      "id": "b9t51zEUG59xKRay",
+      "name": "Personal"
+    }
+  ]
+}

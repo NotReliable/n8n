@@ -1,0 +1,1122 @@
+{
+  "name": "Trending Blog Post Automation (Wautomate)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search?engine=google_trends",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=automation"
+            },
+            {
+              "name": "geo",
+              "value": "MY"
+            },
+            {
+              "name": "hl",
+              "value": "en"
+            },
+            {
+              "name": "date",
+              "value": "={{ $now.minus({ days: 3 }).format('yyyy-MM-dd') }} {{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "data_type",
+              "value": "RELATED_QUERIES"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "a6feba7d-6596-41f0-aaf8-9a3a99f1734b",
+      "name": "Trends",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "xuuji1DsqU7Zhw8T",
+          "name": "SerpApi Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * * "
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9b2dea69-8fee-4f2d-bfc6-3cd02cffb693",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"most-trending\": {\n\n    \"#1\": { \n\n      \"query\":\"{{ $json.related_queries.rising[0].query }}\",\n      \"score\":\"{{ $json.related_queries.rising[0].extracted_value }}\"\n\n    },\n\n\n    \"#2\": { \n\n      \"query\":\"{{ $json.related_queries.rising[1].query }}\",\n      \"score\":\"{{ $json.related_queries.rising[1].extracted_value }}\"\n\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        420,
+        0
+      ],
+      "id": "761968be-97b5-4e31-a263-73b0112f898a",
+      "name": "2 Most Trending"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the top array from your JSON\nconst topItems = $('Trends').first().json.related_queries.top;\n\n// Filter the items to only include those with extracted_value > 30\nconst filtered = topItems.filter(item => item.extracted_value > 30);\n\n// Map the filtered items to their query values and join them with commas\nconst resultString = filtered.map(item => item.query).join(', ');\n\n// Return the result in a new JSON property\nreturn [{ json: { result: resultString } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "1fc2f745-25a7-4392-abad-b8a3677bb4a4",
+      "name": "High search volume keywords"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are part of a team that creates world class blog posts. Your job is to choose the topic for each blog post. \n\nThe blog posts are posted on the website of an AI and automation agency company called Wautomate that focused on building custom ai automation and AI agents solutions. The blog posts are mainly posted as part of an SEO campaign to get Wautomate to rank high for its products and services.\n\nIn this instance, you are given a list of 2 keywords which have been trending the most on Google news search over the past few days. \n\nYour job is to pick one which you think would make for the most relevant blog post with the best SEO outcomes for the client. \n\nThe keywords have two attributes: \n\n1. query: This attribute determines the search query that users have been searching for which is trending. \n\n2. value: This attribute determines what percentage increase the keyword has seen compared to previous periods (i.e. the increase in search volume). \n\nYou must choose one out of the taking into consideration both the relevance of the keyword for [COMPANY NAME's] SEO efforts and the comparative trendiness determined by the value attribute. \n\nOutput the keyword you decided to post a blog on and nothing else. Don't explain your reasoning. Just output the keyword.\n\nThis instance: \n\nKeyword 1:\n{{ $('2 Most Trending').item.json['most-trending']['#1'].toJsonString() }} \n\nKeyword2: \n{{ $('2 Most Trending').item.json['most-trending']['#2'].toJsonString() }} "
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        840,
+        0
+      ],
+      "id": "df619825-a349-43f8-a1a8-a56396ff6628",
+      "name": "Choosing Topic"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"sonar-pro\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Act as a professional news researcher who is capable of finding detailed summaries about a news topic from highly reputable sources.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \" Research the following topic and return everything you can find: '{{ $json.content }}' \"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        0
+      ],
+      "id": "659466d9-6111-4029-87a1-9ea26a43167a",
+      "name": "Research",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mQ01OSlXsYEwILlv",
+          "name": "Perplexity Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const topic = $input.first().json.text;\n\nconst formatValidJson = (value) => {\n  return value.replace(/[\\n\\r]/g, ''); \n}\n\nreturn {\n  content : formatValidJson(topic)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "b90de8b7-440f-41a6-94ee-98c2d6c8475f",
+      "name": "Format Valid Json Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23b8e8c4-9191-415a-9661-1b60d413528a",
+              "name": "research",
+              "value": "={{ $json.choices[0].message.content.replaceAll(\"[1]\", \" - source: \" +$json.citations[0]).replaceAll(\"[2]\",\" - source:\" +$json.citations[1]).replaceAll(\"[3]\",\" - source: \" +$json.citations[2]).replaceAll(\"[4]\",\" - source: \"+$json.citations[3]).replaceAll(\"[5]\",\" - source: \"+$json.citations[4]).replaceAll(\"[6]\",\" - source: \"+$json.citations[5]).replaceAll(\"[7]\",\" - source: \"+$json.citations[6]).replaceAll(\"[8]\",\" - source: \"+$json.citations[7]).replaceAll(\"[9]\",\" - source: \"+$json.citations[8]).replaceAll(\"[10]\",\" - source: \"+$json.citations[9]) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1580,
+        0
+      ],
+      "id": "381d412d-f96d-4d72-a098-a4c96d46dcc3",
+      "name": "Fix Links"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-pro-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        980
+      ],
+      "id": "b2238c30-3bb1-402c-9d5b-03c88e637f37",
+      "name": "Google Gemini Pro",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2520,
+        960
+      ],
+      "id": "d6e7f557-b01e-4573-96e7-9271401bf7e5",
+      "name": "Google Gemini Flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are part of a team that creates world class blog posts for SEO purposes. \n\nEvery week your team posts one blog post on the most trending news in this week of AI. As the copywriter for the blogs, you are provided with the folling information: \n\n- Query: The topic of this weeks blog post. This is the most trending news in the space.\n\n- Other keywords: This is a list of some high search volume keywords in the AI space. The goal is to include some of these into the blog post naturally. This is only optional and dependant on the natural dependancy of this weeks topic to the blog post. Include any of the keywords in the blog, if you can do so naturally without changing the meaning of the blog post.  \n\n\n- Research findings: This is research found from very reputable resources in relation to the topic of the post. Your blog post must be based off this research.\n\n\nGiven the said info, you must write the blog post.\n \nThe blog post must: \n\n- Place the query in the blog title, H1 header and early in the introduction. \n\n- Include all detail in research findings. When including the research points, make sure to also include their source URL so that the copywriter can use them as hyperlinks. (source url for each statement is given in the research findings next to the text)\n\n- Be very detailed. \n\n- Be using tone similar to that of a reporter, invoking curiosity and excitement and thrill in the readers.\n\n- Flow naturally and make sense. \n\n- Be at minimum 1500 to 2000 words long. \n\n- Be suitable for a year 5 reading level. \n\nMake sure to create the entire blog post draft in your first output. Don't stop or cut it short. \n\nYour output must be the blog post and nothing else.\n\nHere are the details of your next blog post project: \n\nQuery: \n{{ $('Choosing Topic').item.json.text }}\n\nDetailed Research: \n{{ $json.research }}\n\nWrite the blog post.\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1800,
+        0
+      ],
+      "id": "08a03ee4-0119-4e0d-ac99-e139b136f8db",
+      "name": "Blog Writer"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "19c808f2-84dc-8090-bdd9-d5b87ad368e2",
+          "mode": "list",
+          "cachedResultName": "Completed Blog Post Database",
+          "cachedResultUrl": "https://www.notion.so/19c808f284dc8090bdd9d5b87ad368e2"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2180,
+        0
+      ],
+      "id": "155a79e2-69d2-4acc-acc2-4d997f52eb5b",
+      "name": "Grab All Previous Posts",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "SpycmLTyq3UWgNYR",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "previous-posts",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2360,
+        0
+      ],
+      "id": "67cb918b-6708-4022-955e-9ab280083122",
+      "name": "Combine into prev-post obj"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are part of a team that creats world class blog posts. \n\nYou are in charge of internal linking between blog posts. \n\nFor each new blog post that comes across your desk, your job is to look through previously posted blogs and make atleast 5 internal links. \n\nTo choose the best internal linking opportunities you must: \n\n- Read the previous blog post summaries and look through their keywords. If there is a match where the previous blog post is highly relevant, then this is an internal linking opportunity. \n\n- Do not link if it is not highly relevant. Only make a link if it makes sense and adds value for the reader. \n\nOnce you've found the best linking opportunities, you must update the blog post with the internal links. To do this you must: \n\n- Add the link of the previous blog post at the relevant section of the new blog post. Drop the URL at the place which makes most sense. Later we will hyperlink the URL to the word in the blog post which it is placed next to. So your placing is very important. \n\nMake sure to not delete any existing URLs or change anything about the blog post provided to you. You must only add new internal linking URLs and output the revised blog post. \n\nYour output must be the blog post given to you plus the new urls. Don't remove any info. \n\nDon't return the previous blog posts. Only return the current blog post with the internal links added.\n\nCurrent blog Post: \n{{ $('Blog Writer').item.json.text }}\n\nPrevious Blog Posts: \n{{ $json['previous-posts'].toJsonString().split() }}\n\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2580,
+        0
+      ],
+      "id": "c138309f-e444-40de-be87-230fd50a1e4b",
+      "name": "Add Internal Links"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3240,
+        940
+      ],
+      "id": "7b02ace2-06e5-48a1-91d0-efeb4e9a937a",
+      "name": "Google Gemini Flash THinking",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=DO NOT OUTPUT ANYTHING OTHER THAN THE CODE. I want you to follow the layout of the template as a guide to generate the WordPress code for a blog post. Here are the rules to follow:\n\nThe blog post should have a title, estimated reading time, key takeaways, table of contents, body, and FAQ in this order.\nMake it engaging by using italics, dot points, quotes, bold, spaces, and sometimes new lines. Never use emojis.\nThe blog post will have some URLs referenced next to certain keyphrases to show where the info came from. You must hyperlink the keyphrase with the provided URL so that the reader can click on the referenced URL. It is critical you get this right.\nWrap the entire content in a <div> with inline CSS that ensures optimal readability on a white background. Use a dark gray text color (#333333) for better contrast, a legible font such as 'Arial, sans-serif', and set the line-height to 1.8 for comfortable reading. All non-heading text elements (e.g., paragraphs, list items) should have an inline or embedded style that sets their font size to 18px and color to #333333 using !important to maintain consistency. Hyperlinks, table of contents points, and FAQ questions must be highlighted in a vibrant blue (#007bff) for clear distinction. Headings and subheadings should feature a subtle bottom border in blue (#007bff) with balanced padding to create a structured reading flow. \nPlace a double break (<br><br>) between major sections to enhance readability and ensure a clutter-free layout.\n\nBlog post: \n{{ $json.text }}\n\n\nGenerate blog content in HTML format. Follow these rules:\n- Use ONLY HTML tags (e.g., <p>, <h1>, <ul>).\n- NEVER include Markdown (no ```, **, or #), JSON, or code blocks.\n- Return raw HTML as a plain string.\n\nHere's an example of a well formatted output:\n\n<div style=\"color: #333333; font-family: Arial, sans-serif; line-height: 1.8; background-color: #ffffff;\"><h1 style=\"border-bottom: 2px solid #007bff; padding-bottom: 5px;\">Blog Title</h1><br><br><p style=\"font-size: 18px !important; color: #333333 !important;\">Welcome to my blog post, designed for optimal readability and a clear, structured layout.</p><br><br><h2 style=\"border-bottom: 2px solid #007bff; padding-bottom: 5px;\">Table of Contents</h2><ul style=\"font-size: 18px !important; color: #333333 !important;\"><li><a href=\"#section1\" style=\"color: #007bff;\">Section 1</a></li><li><a href=\"#section2\" style=\"color: #007bff;\">Section 2</a></li></ul><br><br><h2 style=\"border-bottom: 2px solid #007bff; padding-bottom: 5px;\">Section 1</h2><p id=\"section1\" style=\"font-size: 18px !important; color: #333333 !important;\">This section introduces the main topics of the post with clear and concise explanations.</p><br><br><h2 style=\"border-bottom: 2px solid #007bff; padding-bottom: 5px;\">Section 2</h2><p id=\"section2\" style=\"font-size: 18px !important; color: #333333 !important;\">Detailed insights and further discussion are provided here, along with <a href=\"#\" style=\"color: #007bff;\">additional resources</a> for reference.</p><br><br><h2 style=\"border-bottom: 2px solid #007bff; padding-bottom: 5px;\">FAQ</h2><p style=\"font-size: 18px !important; color: #333333 !important;\"><strong style=\"color: #007bff;\">Q:</strong> How can I implement this styling?<br><strong style=\"color: #007bff;\">A:</strong> Simply copy the code and adjust the content as needed.</p></div>"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2960,
+        0
+      ],
+      "id": "0311728d-a616-455c-b750-06cfc4001b1c",
+      "name": "Convert to HTML"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a slug for the following blog post: \n{{ $('Add Internal Links').item.json.text }}\n\nA slug in a blog post is the part of the URL that comes after the domain name and identifies a specific page. It is typically a short, descriptive phrase that summarizes the content of the post, making it easier for users and search engines to understand what the page is about. For example, in the URL www.example.com/intelligent-agents, the slug is intelligent-agents. A good slug is concise, contains relevant keywords, and avoids unnecessary words to improve readability and SEO. \n\nThe slug must be 4 or 5 words max and must include the primary keyword of the blog post which is {{ $('Format Valid Json Output').item.json.content }}.\n\nYour output must be the slug and nothing else so that I can copy and paste your output and put it at the end of my blog post URL to post it right away.Your output also must be concise, not more than 75 characters."
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        3580,
+        0
+      ],
+      "id": "c288006e-c82a-4c79-ad78-5e98e6b08224",
+      "name": "Slug Generator"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract the blog post title from the following blog post: \n{{ $('Add Internal Links').item.json.text }}\n\nThe blog post title must include the primary keyword '{{ $('Format Valid Json Output').item.json.content }}' and must inform the users right away of what they can expect from reading the blog post. \n\n- Don't put the output in \"\". The output should just text with no markdown or formatting. \n\nYour output must only be the blog post title and nothing else.Your blog post title should be SEO-optimized, concise , not to lengthy and attention grabbing."
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        3940,
+        0
+      ],
+      "id": "1c3df6d0-9400-44d4-be7d-682f2c10bec6",
+      "name": "Blog Title"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a good meta description for the following blog post: \n{{ $('Add Internal Links').item.json.text }}\n\nA good meta description for a blog post that is SEO-optimized should:\n- Be Concise: Stick to less than 145 characters to ensure the full description displays in search results. \n- Include Keywords: Incorporate primary keywords naturally to improve visibility and relevance to search queries.\n\nPrimary keyword = {{ $('Format Valid Json Output').item.json.content }}\n\n\n- Provide Value: Clearly describe what the reader will learn or gain by clicking the link. \n\n- Be Engaging: Use persuasive language, such as action verbs or a question, to encourage clicks. \n\n- Align with Content: Ensure the description accurately reflects the blog post to meet user expectations and reduce bounce rates. \n\nYour output must only be the meta description and nothing else.Your output of meta description should be SEO-optimized. Your output must less than 145 characters in total (characters counting including letters,special characters and numbers).\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        4280,
+        0
+      ],
+      "id": "c8f47ddc-60f8-4be8-ab6a-c2710f869a0a",
+      "name": "Meta Description"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clean Markdown/JSON syntax\nconst rawOutput = $input.first().json.text;\n\n// Remove ```html, ```json, and triple backticks\nlet cleanedHTML = rawOutput.replace(/```(html|json)?/g, '');\n\n// Trim whitespace and dangling quotes\ncleanedHTML = cleanedHTML.trim().replace(/^\"+|\"+$/g, '');\n\n// Return plain HTML string\nreturn { html: cleanedHTML };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3340,
+        0
+      ],
+      "id": "d8852eab-a999-465e-b56b-99632478f952",
+      "name": "Format to Html Element Only"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a good focus keyphrase for the following blog post :\n{{ $('Add Internal Links').item.json.text }}\n\nA good focus keyphrase that is SEO-Optimized should have the following citeria :\n- Keyphrase in introduction: Your keyphrase or its synonyms do not appear in the first paragraph. Make sure the topic is clear immediately.\n- Keyphrase in SEO title: Not all the words from your keyphrase appear in the SEO title. For the best SEO results write the exact match of your keyphrase in the SEO title, and put the keyphrase at the beginning of the title.\n- Keyphrase in meta description: The meta description has been specified, but it does not contain the keyphrase. Fix that!\n- Keyphrase in subheading: Use more keyphrases or synonyms in your H2 and H3 subheadings!\n\n Your output must only be the keyphrase and nothing else.Your output of keyphrase should be SEO-optimized, short and concise."
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        4640,
+        0
+      ],
+      "id": "ee04d92a-316d-46d5-9c3f-11435c48348c",
+      "name": "Keyphrase"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role :\nYou are an advanced image ranking speecialist designed to evaluate and rank images based on their quality. Your task is to analyze a list of images and rank the top 3 based on the following criteria:\n\nYou will receive input as below :\n{{ $json.images.toJsonString() }}\n\n### Evaluation Criteria:\n1. **Relevance**:\n   - How closely the images content matches the given keyword or topic.\n   - Whether the content provides detailed and accurate information about the topic.\n\n2. **Credibility**:\n   - Check the credibility of the source (e.g., reputable websites score higher).\n\nInstructions:\n1. Review the list of images provided as input.\n2. Assign a quality score to each images based on the criteria above.\n3. Rank the top 5 images and provide a short reason for their rank based on the evaluation criteria.\n",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        5460,
+        0
+      ],
+      "id": "c552aba8-b4a5-440f-9edd-3b0143b5f5b2",
+      "name": "Image Ranking"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.rankedImages",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        5840,
+        0
+      ],
+      "id": "d0ec57b3-7173-4f1e-8999-bab02f5cf5c8",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        6020,
+        0
+      ],
+      "id": "4c89a352-2ff1-4d05-8555-3ed7d396481f",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"rankedImages\": [\n    {\n      \"rank\": 1,\n      \"imageRelevance\" : \"Excellent\",\n      \"imageUrl\" :\"www.x.com\",\n      \"reason\": \"Why this article is ranked #1 based on the evaluation criteria.\"\n    }\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5540,
+        220
+      ],
+      "id": "4f123bd9-37ca-44b9-8817-ea3ea18c8db8",
+      "name": "Image Ranking Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $('Blog Title').item.json.text }}"
+            },
+            {
+              "name": "location",
+              "value": "United States"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5240,
+        0
+      ],
+      "id": "a81df011-3101-4586-8772-20f5d0342f19",
+      "name": "Search for Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "hwIDSBgVDnespPrz",
+          "name": "SerperApi Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wautomate.com/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $('Format Valid Json Details').first().json.title }}\",\n  \"content\": {{ $('Format Valid Json Details').first().json.blogContent }},\n  \"slug\": \"{{ $('Format Valid Json Details').first().json.slug }}\",\n  \"status\": \"publish\",\n  \"comment_status\": \"closed\",\n  \"categories\" : [{{ $('Format Categories & Tags Output').item.json.blogCategory }}],\n  \"tags\" : [{{ $('Format Categories & Tags Output').item.json.blogTag }}],\n  \"featured_media\" : \"{{ $('Upload Image To Media Library (Wordpress)').item.json.id }}\",\n  \"meta\": {\n    \"_yoast_wpseo_metadesc\": \"{{ $('Format Valid Json Details').first().json.metaDesc }}\",\n    \"_yoast_wpseo_focuskw\": \"{{ $('Format Valid Json Details').first().json.keyphrase }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7000,
+        0
+      ],
+      "id": "2e9287bd-b4cf-491a-af63-f007e13ac55b",
+      "name": "Create Blog Post",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "LztYjmBdaMCJfjgy",
+          "name": "Wautomate Wordpress credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RqFFMISHObVf3diD",
+          "mode": "list",
+          "cachedResultName": "Upload Media to Wordpress Media Library"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "imageUrl": "={{ $json['output.rankedImages'].imageUrl }}",
+            "blogContent": "={{ $('Add Internal Links').first().json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "blogContent",
+              "displayName": "blogContent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "imageUrl",
+              "displayName": "imageUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        6200,
+        0
+      ],
+      "id": "1a80de71-d937-414d-8af1-75ee3952e418",
+      "name": "Upload Image To Media Library (Wordpress)"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "tw4L7LfI1Gn382Pa",
+          "mode": "list",
+          "cachedResultName": "Create Blog Post Categories"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "blogContent": "={{ $('Add Internal Links').first().json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "blogContent",
+              "displayName": "blogContent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        6400,
+        0
+      ],
+      "id": "e04ea02f-631d-4f52-8a8c-dde1a1d27e83",
+      "name": "Create Blog Post Categories"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "4g7TSDp0ZsCSXsU8",
+          "mode": "list",
+          "cachedResultName": "Create Blog Post Tags"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "blogContent": "={{ $('Add Internal Links').first().json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "blogContent",
+              "displayName": "blogContent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        6600,
+        0
+      ],
+      "id": "dad45369-4345-4f82-9c91-63febb645a30",
+      "name": "Create Blog Post Tags"
+    },
+    {
+      "parameters": {
+        "jsCode": "const blogCategories = $('Create Blog Post Categories').first().json.categoryID;\nconst blogTags = $('Create Blog Post Tags').first().json.tagID;\n\nconst result = {\n  \"blogCategory\" : blogCategories.map(item => item.id),\n  \"blogTag\" : blogTags.map(item => item.id)\n}\n\nreturn result"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6800,
+        0
+      ],
+      "id": "0e81ff54-b994-450b-a47d-74ab2312004b",
+      "name": "Format Categories & Tags Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const blogHtmlContent = $('Format to Html Element Only').first().json.html;\n\nconst formatValidJson = (value) => {\n  return value.replace(/[\\n\\r]/g, ''); \n}\n\nreturn {\n  \"blogContent\" : JSON.stringify(blogHtmlContent),\n  \"title\" : formatValidJson($('Blog Title').first().json.text),\n  \"slug\" : formatValidJson($('Slug Generator').first().json.text),\n  \"metaDesc\" : formatValidJson($('Meta Description').first().json.text),\n  \"keyphrase\" : formatValidJson($(\"Keyphrase\").first().json.text)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5000,
+        0
+      ],
+      "id": "dd554de8-2265-4ffa-af4a-04666e7925c8",
+      "name": "Format Valid Json Details"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "19c808f2-84dc-8090-bdd9-d5b87ad368e2",
+          "mode": "list",
+          "cachedResultName": "Completed Blog Post Database",
+          "cachedResultUrl": "https://www.notion.so/19c808f284dc8090bdd9d5b87ad368e2"
+        },
+        "title": "={{ $('Format Valid Json Details').first().json.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Summary|rich_text",
+              "textContent": "={{ $('Format Valid Json Details').first().json.metaDesc }}"
+            },
+            {
+              "key": "Keyword|rich_text",
+              "textContent": "={{ $('Format Valid Json Output').first().json.content }}"
+            },
+            {
+              "key": "Blog Url|url",
+              "urlValue": "={{ $('Create Blog Post').first().json.link }}"
+            },
+            {
+              "key": "Blog Title|title",
+              "title": "={{ $('Format Valid Json Details').first().json.title }} "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        7200,
+        0
+      ],
+      "id": "0e728258-ba81-4ece-8d5b-44dbe3b3300f",
+      "name": "Create New Record (Completed Blog Post)",
+      "credentials": {
+        "notionApi": {
+          "id": "SpycmLTyq3UWgNYR",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trends": {
+      "main": [
+        [
+          {
+            "node": "2 Most Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 Most Trending": {
+      "main": [
+        [
+          {
+            "node": "High search volume keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High search volume keywords": {
+      "main": [
+        [
+          {
+            "node": "Choosing Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Choosing Topic": {
+      "main": [
+        [
+          {
+            "node": "Format Valid Json Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Valid Json Output": {
+      "main": [
+        [
+          {
+            "node": "Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research": {
+      "main": [
+        [
+          {
+            "node": "Fix Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix Links": {
+      "main": [
+        [
+          {
+            "node": "Blog Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Pro": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Choosing Topic",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Convert to HTML",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Blog Title",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Blog Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Slug Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Meta Description",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Keyphrase",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grab All Previous Posts": {
+      "main": [
+        [
+          {
+            "node": "Combine into prev-post obj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Blog Writer": {
+      "main": [
+        [
+          {
+            "node": "Grab All Previous Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine into prev-post obj": {
+      "main": [
+        [
+          {
+            "node": "Add Internal Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Flash THinking": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Add Internal Links",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image Ranking",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Internal Links": {
+      "main": [
+        [
+          {
+            "node": "Convert to HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slug Generator": {
+      "main": [
+        [
+          {
+            "node": "Blog Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Blog Title": {
+      "main": [
+        [
+          {
+            "node": "Meta Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta Description": {
+      "main": [
+        [
+          {
+            "node": "Keyphrase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format to Html Element Only": {
+      "main": [
+        [
+          {
+            "node": "Slug Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keyphrase": {
+      "main": [
+        [
+          {
+            "node": "Format Valid Json Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Ranking": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Upload Image To Media Library (Wordpress)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Ranking Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Image Ranking",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for Image": {
+      "main": [
+        [
+          {
+            "node": "Image Ranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Post": {
+      "main": [
+        [
+          {
+            "node": "Create New Record (Completed Blog Post)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image To Media Library (Wordpress)": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Post Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Post Categories": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Post Tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Post Tags": {
+      "main": [
+        [
+          {
+            "node": "Format Categories & Tags Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Categories & Tags Output": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to HTML": {
+      "main": [
+        [
+          {
+            "node": "Format to Html Element Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Valid Json Details": {
+      "main": [
+        [
+          {
+            "node": "Search for Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "31eca99e-6865-427e-a58a-9005f6d4fe45",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6a23a1377e872f6f201a296e14c75691e100934cfebe9566c37e5753607d423"
+  },
+  "id": "8gEYaLzuar7ehpwZ",
+  "tags": [
+    {
+      "createdAt": "2025-03-09T02:36:21.469Z",
+      "updatedAt": "2025-03-09T02:36:21.469Z",
+      "id": "JkxrhRXRXwrgsTsU",
+      "name": "Wautomate Blog Posting"
+    },
+    {
+      "createdAt": "2025-03-09T02:36:21.464Z",
+      "updatedAt": "2025-03-09T02:36:21.464Z",
+      "id": "qJ6jfZcxtoDxsNay",
+      "name": "marketing-automation"
+    }
+  ]
+}

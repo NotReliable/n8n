@@ -1,0 +1,303 @@
+{
+  "name": "Upload Media to Wordpress Media Library",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "blogContent"
+            },
+            {
+              "name": "imageUrl"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bb783cd1-da52-4f90-9de4-192a56764661",
+      "name": "Workflow Input Trigger"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.imageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "id": "efd55ff2-99e2-4d08-8f82-41d4cbfb6931",
+      "name": "Get Binary data of Images",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://wautomate.com/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename=\"{{ $binary.data.fileName }}\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "=data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "c15e4471-afda-4a3c-b6a9-c6e31ce2fb64",
+      "name": "Upload to Wordpress Node",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "LztYjmBdaMCJfjgy",
+          "name": "Wautomate Wordpress credential"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://wautomate.com/wp-json/wp/v2/media/{{ $('Upload to Wordpress Node').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"alt_text\":\"{{ $json.output.alt_text }}\",\n  \"caption\" : \"{{ $json.output.caption }}\",\n  \"title\" : \"{{ $json.output.title }}\",\n  \"description\" : \"{{ $json.output.description }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "6c5fea17-f1bf-46a9-9967-714d3321c404",
+      "name": "Update Images Details (Wordpress)",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "LztYjmBdaMCJfjgy",
+          "name": "Wautomate Wordpress credential"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserAutofixing",
+      "typeVersion": 1,
+      "position": [
+        880,
+        240
+      ],
+      "id": "462591a9-5c75-49e4-9bf7-0403793315cd",
+      "name": "Auto-fixing Output Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        740,
+        420
+      ],
+      "id": "ea41efc6-a26a-42cd-b8e3-1cfa8187c98c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HUOBqHMsVZzUprUx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"alt_text\": \"This is alt text for image\",\n\t\"caption\": \"This is caption for image\",\n    \"title\" : \"This is title for image\",\n    \"description\" : \"This is description for image\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1020,
+        420
+      ],
+      "id": "ac457180-f848-4673-b40a-d546da0b37e2",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a image optimizer. Your goal is to provide details about alt_text , caption, title and description  with SEO-optimized for the image data that i will provide u in the following :\n{{ $('Get Binary data of Images').item }}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        700,
+        0
+      ],
+      "id": "f9e29b89-5c14-4e43-b306-e0614dd1da5f",
+      "name": "Image Detail Optimizer"
+    }
+  ],
+  "pinData": {
+    "Workflow Input Trigger": [
+      {
+        "json": {
+          "blogContent": null,
+          "imageUrl": "https://qentelli.com/sites/default/files/2024-05/servernow.png"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Workflow Input Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Binary data of Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Binary data of Images": {
+      "main": [
+        [
+          {
+            "node": "Upload to Wordpress Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Wordpress Node": {
+      "main": [
+        [
+          {
+            "node": "Image Detail Optimizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-fixing Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Image Detail Optimizer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image Detail Optimizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Detail Optimizer": {
+      "main": [
+        [
+          {
+            "node": "Update Images Details (Wordpress)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cc39e988-0657-45ee-9cd0-2dd025904457",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e6a23a1377e872f6f201a296e14c75691e100934cfebe9566c37e5753607d423"
+  },
+  "id": "RqFFMISHObVf3diD",
+  "tags": [
+    {
+      "createdAt": "2025-03-09T02:36:21.469Z",
+      "updatedAt": "2025-03-09T02:36:21.469Z",
+      "id": "JkxrhRXRXwrgsTsU",
+      "name": "Wautomate Blog Posting"
+    },
+    {
+      "createdAt": "2025-03-09T02:36:21.464Z",
+      "updatedAt": "2025-03-09T02:36:21.464Z",
+      "id": "qJ6jfZcxtoDxsNay",
+      "name": "marketing-automation"
+    }
+  ]
+}
